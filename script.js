@@ -8,44 +8,23 @@ const btnNewGame = document.querySelector('.btn--new');
 const btnRoll = document.querySelector('.btn--roll');
 const btnHold = document.querySelector('.btn--hold');
 const diceEl = document.querySelector('.dice');
-const player0Section = document.querySelector('.player--0');
-const player1Section = document.querySelector('.player--1');
+const player0El = document.querySelector('.player--0');
+const player1El = document.querySelector('.player--1');
 
-let scoreKeeper = {
-  player0: {
-    totalScore: 0,
-    currScore: 0,
-  },
-  player1: {
-    totalScore: 0,
-    currScore: 0,
-  },
-};
-
-// const scores = [0,0];
-// let currentScore = 0;
-// let activePlayer = 0;
+const scores = [0, 0];
+let currentScore = 0;
+let activePlayer = 0;
 
 const setInitialGameState = () => {
-  scoreKeeper = {
-    player0: {
-      totalScore: 0,
-      currScore: 0,
-    },
-    player1: {
-      totalScore: 0,
-      currScore: 0,
-    },
-  };
-  score0El.textContent = scoreKeeper.player0.totalScore;
-  score1El.textContent = scoreKeeper.player1.totalScore;
-  currScore0El.textContent = scoreKeeper.player0.currScore;
-  currScore1El.textContent = scoreKeeper.player1.currScore;
+  score0El.textContent = 0;
+  score1El.textContent = 0;
+  currScore0El.textContent = 0;
+  currScore1El.textContent = 0;
   diceEl.classList.add('hidden');
-  player0Section.classList.add('player--active');
-  player1Section.classList.remove('player--active');
-  player0Section.classList.remove('player--winner');
-  player1Section.classList.remove('player--winner');
+  player0El.classList.add('player--active');
+  player1El.classList.remove('player--active');
+  player0El.classList.remove('player--winner');
+  player1El.classList.remove('player--winner');
   btnRoll.classList.remove('hidden');
   btnHold.classList.remove('hidden');
 };
@@ -66,95 +45,57 @@ const setDiceImg = rollValue => {
   diceEl.src = `dice-${rollValue}.png`;
 };
 
+const switchPlayer = () => {
+  // reset current score
+  currentScore = 0;
+  // switch to next player programmatically
+  document.querySelector(`#current--${activePlayer}`).textContent = 0;
+  activePlayer = activePlayer === 0 ? 1 : 0;
+  // visually switch the next player in UI
+  [...document.querySelectorAll('.player')].forEach(el =>
+    el.classList.toggle('player--active')
+  );
+};
+
 btnRoll.addEventListener('click', () => {
-  // Check which player is rolling
-  if (player0Section.classList.contains('player--active')) {
-    let player = 0;
-    // Generate dice roll
-    const roll = rollDice();
+  // Generate dice roll
+  const roll = rollDice();
+  // display corresponding dice img
+  setDiceImg(roll);
 
-    // display dice
-    setDiceImg(roll);
+  // check for rolled 1
+  if (roll !== 1) {
+    // add roll to current score
+    currentScore += roll;
+    // display current score
+    document.querySelector(`#current--${activePlayer}`).textContent =
+      currentScore;
 
-    // check for rolled 1
-    if (roll === 1) {
-      // reset current score
-      scoreKeeper.player0.currScore = 0;
-      currScore0El.textContent = scoreKeeper.player0.currScore;
-      // switch player
-      player0Section.classList.remove('player--active');
-      player1Section.classList.add('player--active');
-    }
-    if (roll !== 1) {
-      // add roll to current score
-      scoreKeeper.player0.currScore += roll;
-      // display current score
-      currScore0El.textContent = scoreKeeper.player0.currScore;
-      //check for winner
-      if (
-        scoreKeeper.player0.currScore + scoreKeeper.player0.totalScore >=
-        20
-      ) {
-        player0Section.classList.add('player--winner');
-        setEndgame();
-      }
+    // check for winner
+    if (scores[activePlayer] + currentScore >= 20) {
+      // set winning status
+      document
+        .querySelector(`.player--${activePlayer}`)
+        .classList.add('player--winner');
+
+      //set endgame status
+      setEndgame();
     }
   } else {
-    // Generate dice roll
-    const roll = rollDice();
-
-    // display dice
-    setDiceImg(roll);
-
-    // check for rolled 1
-    if (roll === 1) {
-      // reset current score
-      scoreKeeper.player1.currScore = 0;
-      currScore1El.textContent = scoreKeeper.player1.currScore;
-      // switch player
-      player1Section.classList.remove('player--active');
-      player0Section.classList.add('player--active');
-    }
-    if (roll !== 1) {
-      // add roll to current score
-      scoreKeeper.player1.currScore += roll;
-      // display current score
-      currScore1El.textContent = scoreKeeper.player1.currScore;
-      //check for winner
-      if (
-        scoreKeeper.player1.currScore + scoreKeeper.player1.totalScore >=
-        20
-      ) {
-        player1Section.classList.add('player--winner');
-        setEndgame();
-      }
-    }
+    // switch to next player
+    switchPlayer();
   }
 });
 
 btnHold.addEventListener('click', () => {
-  // check which player
-  if (player0Section.classList.contains('player--active')) {
-    // set score
-    scoreKeeper.player0.totalScore += scoreKeeper.player0.currScore;
-    // display new total score
-    score0El.textContent = scoreKeeper.player0.totalScore;
-    scoreKeeper.player0.currScore = 0;
-    currScore0El.textContent = scoreKeeper.player0.currScore;
-    // switch player
-    player0Section.classList.remove('player--active');
-    player1Section.classList.add('player--active');
-  } else {
-    // set score
-    scoreKeeper.player1.totalScore += scoreKeeper.player1.currScore;
-    // display new total score
-    score1El.textContent = scoreKeeper.player1.totalScore;
-    scoreKeeper.player1.currScore = 0;
-    currScore1El.textContent = scoreKeeper.player1.currScore;
-    // switch player
-    player1Section.classList.remove('player--active');
-    player0Section.classList.add('player--active');
-  }
+  // update active player total score
+  scores[activePlayer] += currentScore;
+
+  // display active player total score
+  document.querySelector(`#score--${activePlayer}`).textContent =
+    scores[activePlayer];
+
+  switchPlayer();
 });
 
 btnNewGame.addEventListener('click', () => {
